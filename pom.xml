@@ -43,6 +43,15 @@
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
@@ -82,5 +91,16 @@
             <url>https://repo.inventivetalent.org/content/groups/public/</url>
         </repository>
     </repositories>
+
+    <distributionManagement>
+        <repository>
+            <id>sonatype-nexus-releases</id>
+            <url>https://repo.inventivetalent.org/content/repositories/releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>sonatype-nexus-snapshots</id>
+            <url>https://repo.inventivetalent.org/content/repositories/snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
 
 </project>
