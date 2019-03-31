@@ -271,7 +271,7 @@ public class Deployer implements Callable<Boolean> {
 			for (int z = -radius; z <= radius; z++) {
 				int rx = x + centerX;
 				int rz = z + centerZ;
-				System.out.println("Working on " + rx + "," + rz + " (" + (counter + 1) + "/" + totalCount + ")...");
+				System.out.println("[C] Working on " + rx + "," + rz + " (" + (counter + 1) + "/" + totalCount + ")...");
 				try {
 					handleSection(rx, rz, counter++);
 				} catch (Exception e) {
@@ -506,7 +506,7 @@ public class Deployer implements Callable<Boolean> {
 						//				int offset = regionInFile.getOffset(cX, cZ);
 						//				regionOutFile.setOffset(cX, cZ, offset);
 
-						System.out.println((x + inX) + "," + (z + inZ) + " -> " + inX + "," + inZ);
+						System.out.println("[R] " + (x + inX) + "," + (z + inZ) + " -> " + inX + "," + inZ);
 
 						try (DataInputStream inStream = regionInFile.getChunkDataInputStream(cX, cZ)) {
 							if (inStream != null) {
