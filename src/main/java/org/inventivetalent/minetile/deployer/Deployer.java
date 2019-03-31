@@ -417,7 +417,9 @@ public class Deployer implements Callable<Boolean> {
 		dataTag.set("MapFeatures", new ByteTag("MapFeatures", (byte) 0));
 
 		CompoundTag generatorOptionsTag = dataTag.getOrCreateCompound("generatorOptions");
+		if (generatorOptionsTag == null) { generatorOptionsTag = new CompoundTag("generatorOptions"); }
 		ListTag<CompoundTag> layersTag = generatorOptionsTag.getOrCreateList("layers", CompoundTag.class);
+		if (layersTag == null) { layersTag = new ListTag<>("layers"); }
 		CompoundTag layerTag = new CompoundTag();
 		layerTag.set("block", "minecraft:air");
 		layerTag.set("height", new ByteTag("height", (byte) 1));
