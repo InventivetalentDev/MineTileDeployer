@@ -488,7 +488,7 @@ public class Deployer implements Callable<Boolean> {
 
 			UUID id = UUID.randomUUID();
 			currentServerEntry[0] = id.toString();
-			containerConfig.put("serverId", id);
+			containerConfig.put("serverId", id.toString());
 		}
 
 		try (FileWriter writer = new FileWriter(pluginConfig)) {
