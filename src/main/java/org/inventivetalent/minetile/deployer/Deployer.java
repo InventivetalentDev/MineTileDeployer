@@ -356,7 +356,7 @@ public class Deployer implements Callable<Boolean> {
 		}
 
 		int tileSizeMca = (int) Math.ceil(tileSize / 32.0D);
-		int tileSizeMca2 = (int) Math.ceil(tileSize * 2 / 32.0D);
+		int tileSizeMca2 = tileSizeMca * 2;
 		System.out.println("Copying and shifting " + tileSizeMca2 + "x" + tileSizeMca2 + " (" + (tileSizeMca2 * tileSizeMca2) + ") mca files...");
 
 		// Surrounding chunks in every direction
@@ -371,13 +371,16 @@ public class Deployer implements Callable<Boolean> {
 		int rC = 0;
 		for (int sx = -tileSizeMca; sx < tileSizeMca; sx++) {
 			for (int sz = -tileSizeMca; sz < tileSizeMca; sz++) {
-				System.out.println("[R] " + (rx + sx) + "," + (rz + sz) + " -> " + sx + "," + sz + " [" + x + "," + z + "] (" + (++rC) + "/" + (tileSizeMca2 * tileSizeMca2) + ")");
+				int xx = rx + sx;
+				int zz = rz + sz;
 
-				File regionFile = new File(regionDirectory, "r." + (rx + sx) + "." + (rz + sz) + ".mca");
-				if (!regionFile.exists()) {
-					System.err.println("Region File for " + (rx + sx) + "," + (rz + sz) + " not found. Skipping!");
+				System.out.println("[R]   " + xx + "," + zz + " -> " + sx + "," + sz + " [" + x + "," + z + "] (" + (++rC) + "/" + (tileSizeMca2 * tileSizeMca2) + ")");
+
+				File sourceRegionFile = new File(regionDirectory, "r." + xx + "." + zz + ".mca");
+				if (!sourceRegionFile.exists()) {
+					System.err.println("Region File for " + xx + "," + zz + " not found. Skipping!");
 				} else {
-					copyMCAFile(regionFile, sx, sz, destRegionDir, rx, rz, c);
+					copyMCAFile(sourceRegionFile, sx, sz, destRegionDir, rx, rz, c);
 				}
 			}
 		}
@@ -409,6 +412,7 @@ public class Deployer implements Callable<Boolean> {
 
 	void updateServerProperties(File propertiesFile, int x, int z, int c) throws IOException {
 		if (!propertiesFile.exists()) { return; }
+		//TODO: fix
 
 		try (FileInputStream in = new FileInputStream(propertiesFile)) {
 			Properties properties = new Properties();
@@ -496,8 +500,8 @@ public class Deployer implements Callable<Boolean> {
 		}
 	}
 
-	void copyMCAFile(File in, int inX, int inZ, File targetDir, int x, int z, int c) throws IOException {
-		File out = new File(targetDir, "r." + inX + "." + inZ + ".mca");
+	void copyMCAFile(File in, int tileX, int tileZ, File targetDir, int x, int z, int c) throws IOException {
+		File out = new File(targetDir, "r." + tileX + "." + tileZ + ".mca");
 		if (out.exists()) {
 			out.delete();
 		}
@@ -526,8 +530,8 @@ public class Deployer implements Callable<Boolean> {
 												CompoundTag levelTag = rootTag.getCompound("Level");
 												try (NBTOutputStream nbtOut = new NBTOutputStream(outStream)) {
 													if (levelTag != null) {
-														levelTag.set("xPos", cX + inX * 32);
-														levelTag.set("zPos", cZ + inZ * 32);
+														levelTag.set("xPos", cX + tileX * 32);
+														levelTag.set("zPos", cZ + tileZ * 32);
 
 														//// TODO: fix entity loations
 
