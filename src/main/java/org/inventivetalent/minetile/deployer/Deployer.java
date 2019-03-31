@@ -13,7 +13,14 @@ import java.util.*;
 import java.util.concurrent.Callable;
 
 @CommandLine.Command(description = "Utility to split up large worlds into individual MineTile containers for easy deploying",
-					 showDefaultValues = true)
+					 versionProvider = VersionProvider.class,
+					 showDefaultValues = true,
+					 headerHeading = "@|bold,underline Usage|@:%n%n",
+					 synopsisHeading = "%n",
+					 descriptionHeading = "%n@|bold,underline Description|@:%n%n",
+					 parameterListHeading = "%n@|bold,underline Parameters|@:%n",
+					 optionListHeading = "%n@|bold,underline Options|@:%n",
+					 header = "Record changes to the repository.")
 public class Deployer implements Callable<Boolean> {
 
 	static final String DEFAULT_NAME_FORMAT = "MineTile.%x.%z";
