@@ -146,7 +146,6 @@ public class Deployer implements Callable<Boolean> {
 			output.mkdir();
 		}
 
-
 		if (baseConfig == null || !baseConfig.exists()) {
 			System.err.println("Base configuration not found. This is not recommended! Continuing anyway.");
 		} else {
@@ -178,6 +177,9 @@ public class Deployer implements Callable<Boolean> {
 
 		System.out.println("Each tile will contain a " + (tileSize * 2) + "x" + (tileSize * 2) + " chunk section");
 
+		int totalSize = tileSize * radius * 2;
+		System.out.println("Total Map Size will be " + totalSize + "x" + totalSize + " chunks / ~" + (totalSize * 16) + "x" + (totalSize * 16) + " blocks");
+
 		if (serverNamesFile != null && serverNamesFile.exists()) {
 			try {
 				serverNames = loadLinesFromFile(serverNamesFile);
@@ -205,7 +207,6 @@ public class Deployer implements Callable<Boolean> {
 		} else if (serverHosts.length < totalCount) {
 			System.err.println("There are less sever names set than the amount of generated containers. Will use 127.0.0.1 for leftovers.");
 		}
-
 
 		///// EXIT if dry-run
 		if (dryRun) {
