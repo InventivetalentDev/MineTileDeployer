@@ -361,8 +361,11 @@ public class Deployer implements Callable<Boolean> {
 		// Surrounding chunks in every direction
 		//		tileSizeMca+=1;
 
+		int rC = 0;
 		for (int sx = -tileSizeMca; sx <= tileSizeMca; sx++) {
 			for (int sz = -tileSizeMca; sz <= tileSizeMca; sz++) {
+				System.out.println("[R] " + (x + sx) + "," + (z + sz) + " -> " + sx + "," + sz + " (" + (++rC) + "/" + (tileSizeMca * tileSizeMca) + ")");
+
 				File regionFile = new File(regionDirectory, "r." + (x + sx) + "." + (z + sz) + ".mca");
 				if (!regionFile.exists()) {
 					System.err.println("Region File for " + (x + sx) + "," + (z + sz) + " not found. Skipping!");
@@ -505,8 +508,6 @@ public class Deployer implements Callable<Boolean> {
 
 						//				int offset = regionInFile.getOffset(cX, cZ);
 						//				regionOutFile.setOffset(cX, cZ, offset);
-
-						System.out.println("[R] " + (x + inX) + "," + (z + inZ) + " -> " + inX + "," + inZ);
 
 						try (DataInputStream inStream = regionInFile.getChunkDataInputStream(cX, cZ)) {
 							if (inStream != null) {
