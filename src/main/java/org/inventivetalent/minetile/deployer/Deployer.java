@@ -12,7 +12,8 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.Callable;
 
-@CommandLine.Command(description = "Utility to split up large worlds into individual MineTile containers for easy deploying")
+@CommandLine.Command(description = "Utility to split up large worlds into individual MineTile containers for easy deploying",
+					 showDefaultValues = true)
 public class Deployer implements Callable<Boolean> {
 
 	static final String DEFAULT_NAME_FORMAT = "MineTile.%x.%z";
@@ -379,7 +380,7 @@ public class Deployer implements Callable<Boolean> {
 				String port = "" + (portStart + c);
 				currentServerEntry[3] = port;
 				properties.setProperty("server-port", port);
-			}else{
+			} else {
 				currentServerEntry[3] = properties.getProperty("server-port");
 			}
 
