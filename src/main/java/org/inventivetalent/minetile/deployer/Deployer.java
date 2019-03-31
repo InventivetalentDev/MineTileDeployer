@@ -506,6 +506,8 @@ public class Deployer implements Callable<Boolean> {
 						//				int offset = regionInFile.getOffset(cX, cZ);
 						//				regionOutFile.setOffset(cX, cZ, offset);
 
+						System.out.println((x + inX) + "," + (z + inZ) + " -> " + inX + "," + inZ);
+
 						try (DataInputStream inStream = regionInFile.getChunkDataInputStream(cX, cZ)) {
 							if (inStream != null) {
 								try (DataOutputStream outStream = regionOutFile.getChunkDataOutputStream(cX, cZ)) {
