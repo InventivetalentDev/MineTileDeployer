@@ -11,6 +11,9 @@ import java.io.*;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @CommandLine.Command(description = "Utility to split up large worlds into individual MineTile containers for easy deploying",
 					 versionProvider = VersionProvider.class,
@@ -69,7 +72,7 @@ public class Deployer implements Callable<Boolean> {
 
 	@CommandLine.Option(names = { "--sequentialPorts" },
 						description = "Use sequential port numbers for containers and automatically set them in the server.properties")
-	private boolean sequentialPorts = false;
+	private boolean sequentialPorts = true;
 
 	@CommandLine.Option(names = { "-r", "--radius" },
 						description = "Radius of chunk-sections to split, starting from 0,0\n"
@@ -107,6 +110,10 @@ public class Deployer implements Callable<Boolean> {
 						description = "Whether to create a .tar.gz archive of the individual containers instead of regular directories")
 	private boolean gzip = false;
 
+	@CommandLine.Option(names = { "--threads" },
+						description = "Number of threads to use for creating and copying tile data")
+	private int threads = 4;
+
 	@CommandLine.Option(names = { "-d", "--dry-run" },
 						description = "Only output information about how the given options will affect the output, without generating any files")
 	private boolean dryRun = false;
@@ -123,7 +130,10 @@ public class Deployer implements Callable<Boolean> {
 	File                serverListFile = new File("./servers.csv");
 	int                 totalCount     = 1;
 
-	String[] currentServerEntry = new String[6];
+	//	String[] currentServerEntry = new String[6];
+
+	Executor      tileExecutor;
+	AtomicInteger tileCounter = new AtomicInteger();
 
 	@Override
 	public Boolean call() throws Exception {
@@ -176,8 +186,8 @@ public class Deployer implements Callable<Boolean> {
 			System.err.println("tileSize should be a multiple of 16");
 			return false;
 		}
-		System.out.println("Tile Size Radius is " + tileSize + " chunks / " + (tileSize * 16) + " blocks");
-		System.out.println("Each tile will contain a " + (tileSize * 2) + "x" + (tileSize * 2) + " chunks / " + (tileSize * 16 * 2) + "x" + (tileSize * 16 * 2) + " blocks section");
+		System.out.println("Tile Size Radius is " + (tileSize/32) +" regions / " + tileSize + " chunks / " + (tileSize * 16) + " blocks");
+		System.out.println("Each tile will contain a " + (tileSize * 2 / 32) + "x" + (tileSize * 2 / 32) + " regions / " + (tileSize * 2) + "x" + (tileSize * 2) + " chunks / " + (tileSize * 16 * 2) + "x" + (tileSize * 16 * 2) + " blocks section");
 
 		int totalSize = tileSize * 2 * radius * 2;
 		System.out.println("Total Map Size will be " + totalSize + "x" + totalSize + " chunks / ~" + (totalSize * 16) + "x" + (totalSize * 16) + " blocks");
@@ -217,6 +227,8 @@ public class Deployer implements Callable<Boolean> {
 			System.out.println("Dry-Run - Exiting!");
 			return true;
 		}
+
+		tileExecutor = Executors.newFixedThreadPool(threads);
 
 		if (containerPluginFile == null || !containerPluginFile.exists()) {
 			System.err.println("Container Plugin File not found - Downloading...");
@@ -266,33 +278,45 @@ public class Deployer implements Callable<Boolean> {
 
 		makeBungee();
 
-		int counter = 0;
 		for (int x = -radius; x <= radius; x++) {
 			for (int z = -radius; z <= radius; z++) {
-				int rx = x + centerX;
-				int rz = z + centerZ;
-				System.out.println("[C] Working on " + rx + "," + rz + " (" + (counter + 1) + "/" + totalCount + ")...");
-				try {
-					handleSection(rx, rz, counter++);
-				} catch (Exception e) {
-					System.err.println("Exception on " + rx + "," + rz + "");
-					e.printStackTrace();
-				}
+				final int rx = x + centerX;
+				final int rz = z + centerZ;
 
-				writeServerListEntry(currentServerEntry);
+				tileExecutor.execute(new Runnable() {
+					@Override
+					public void run() {
+						System.out.println("[C] Working on " + rx + "," + rz + " (" + (tileCounter.get() + 1) + "/" + totalCount + ")...");
+						try {
+							handleSection(rx, rz, tileCounter.incrementAndGet());
+						} catch (Exception e) {
+							System.err.println("Exception on " + rx + "," + rz + "");
+							e.printStackTrace();
+						}
+
+						checkIfDone(tileCounter.decrementAndGet());
+					}
+				});
+
+				//				writeServerListEntry(currentServerEntry);
 			}
 		}
 
-		System.out.println();
-		System.out.println("Done!");
-
-		System.out.println("Bungeecord and router plugin are in      " + bungeeDir);
-		System.out.println("Containers with plugin and world are in  " + containersDir);
-
-		System.out.println();
-		System.out.println("List of Servers written to " + serverListFile);
-
 		return true;
+	}
+
+	void checkIfDone(int i) {
+		if (i <= 0) {
+
+			System.out.println();
+			System.out.println("Done!");
+
+			System.out.println("Bungeecord and router plugin are in      " + bungeeDir);
+			System.out.println("Containers with plugin and world are in  " + containersDir);
+
+			System.out.println();
+			System.out.println("List of Servers written to " + serverListFile);
+		}
 	}
 
 	private void makeBungee() throws IOException {
@@ -323,9 +347,9 @@ public class Deployer implements Callable<Boolean> {
 				.replace("%x", "" + x)
 				.replace("%z", "" + z);
 
-		currentServerEntry[1] = name;
-		currentServerEntry[4] = "" + x;
-		currentServerEntry[5] = "" + z;
+		//		currentServerEntry[1] = name;
+		//		currentServerEntry[4] = "" + x;
+		//		currentServerEntry[5] = "" + z;
 
 		File containerDir = new File(containersDir, name);
 		containerDir.mkdir();
@@ -360,8 +384,8 @@ public class Deployer implements Callable<Boolean> {
 		System.out.println("Copying and shifting " + tileSizeMca2 + "x" + tileSizeMca2 + " (" + (tileSizeMca2 * tileSizeMca2) + ") mca files...");
 
 		// Surrounding chunks in every direction
-		tileSizeMca += 1;
-		tileSizeMca2 += 2;
+//		tileSizeMca += 1;
+//		tileSizeMca2 += 2;
 
 		//TODO: should probably multiply the x&z inputs instead of just adding
 
@@ -369,12 +393,12 @@ public class Deployer implements Callable<Boolean> {
 		int rz = tileSizeMca2 * z;
 
 		int rC = 0;
-		for (int sx = -tileSizeMca; sx < tileSizeMca; sx++) {
-			for (int sz = -tileSizeMca; sz < tileSizeMca; sz++) {
+		for (int sx = -tileSizeMca-1; sx <= tileSizeMca; sx++) {
+			for (int sz = -tileSizeMca-1; sz <= tileSizeMca; sz++) {
 				int xx = rx + sx;
 				int zz = rz + sz;
 
-				System.out.println("[R]   " + xx + "," + zz + " -> " + sx + "," + sz + " [" + x + "," + z + "] (" + (++rC) + "/" + (tileSizeMca2 * tileSizeMca2) + ")");
+				System.out.println("[R]  [" + x + "," + z + "] " + xx + "," + zz + " -> " + sx + "," + sz+" (" + (++rC) + "/" + (tileSizeMca2 * tileSizeMca2) + ")");
 
 				File sourceRegionFile = new File(regionDirectory, "r." + xx + "." + zz + ".mca");
 				if (!sourceRegionFile.exists()) {
@@ -419,10 +443,10 @@ public class Deployer implements Callable<Boolean> {
 			properties.load(in);
 			if (sequentialPorts) {
 				String port = "" + (portStart + c);
-				currentServerEntry[3] = port;
+				//				currentServerEntry[3] = port;
 				properties.setProperty("server-port", port);
 			} else {
-				currentServerEntry[3] = properties.getProperty("server-port");
+				//				currentServerEntry[3] = properties.getProperty("server-port");
 			}
 
 			try (FileOutputStream out = new FileOutputStream(propertiesFile)) {
@@ -477,7 +501,7 @@ public class Deployer implements Callable<Boolean> {
 			if (serverHosts.length > 0) {
 				host = serverHosts[c % serverHosts.length];
 			}
-			currentServerEntry[2] = host;
+			//			currentServerEntry[2] = host;
 
 			Map<String, Object> serverConfig = (Map<String, Object>) containerConfig.getOrDefault("server", new HashMap<String, Object>());
 			if (!serverConfig.containsKey("host")) {
@@ -491,7 +515,7 @@ public class Deployer implements Callable<Boolean> {
 			containerConfig.put("tile", tileConfig);
 
 			UUID id = UUID.randomUUID();
-			currentServerEntry[0] = id.toString();
+			//			currentServerEntry[0] = id.toString();
 			containerConfig.put("serverId", id.toString());
 		}
 
