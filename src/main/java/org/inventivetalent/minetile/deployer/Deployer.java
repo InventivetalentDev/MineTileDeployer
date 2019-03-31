@@ -107,6 +107,10 @@ public class Deployer implements Callable<Boolean> {
 						description = "Whether to create a .tar.gz archive of the individual containers instead of regular directories")
 	private boolean gzip = false;
 
+	@CommandLine.Option(names = { "-d", "--dry-run" },
+						description = "Only output information about how the given options will affect the output, without generating any files")
+	private boolean dryRun = false;
+
 	/// Internal stuff
 	File containerPluginFile = new File("./MineTileContainer.jar");
 	File routerPluginFile    = new File("./MineTileRouter.jar");
@@ -142,22 +146,6 @@ public class Deployer implements Callable<Boolean> {
 			output.mkdir();
 		}
 
-		if (containerPluginFile == null || !containerPluginFile.exists()) {
-			System.err.println("Container Plugin File not found - Downloading...");
-			try {
-				FileUtils.copyURLToFile(new URL("https://github.com/InventivetalentDev/MineTileContainer/releases/download/" + containerVersion + "/container-" + containerVersion + ".jar"), containerPluginFile);
-			} catch (IOException e) {
-				throw new RuntimeException("Failed to download container plugin", e);
-			}
-		}
-		if (routerPluginFile == null || !routerPluginFile.exists()) {
-			System.err.println("Router Plugin File not found - Downloading...");
-			try {
-				FileUtils.copyURLToFile(new URL("https://github.com/InventivetalentDev/MineTileRouter/releases/download/" + routerVersion + "/router-" + routerVersion + ".jar"), routerPluginFile);
-			} catch (IOException e) {
-				throw new RuntimeException("Failed to download router plugin", e);
-			}
-		}
 
 		if (baseConfig == null || !baseConfig.exists()) {
 			System.err.println("Base configuration not found. This is not recommended! Continuing anyway.");
@@ -216,6 +204,30 @@ public class Deployer implements Callable<Boolean> {
 			System.err.println("There are no server hosts set. Will use 127.0.0.1");
 		} else if (serverHosts.length < totalCount) {
 			System.err.println("There are less sever names set than the amount of generated containers. Will use 127.0.0.1 for leftovers.");
+		}
+
+
+		///// EXIT if dry-run
+		if (dryRun) {
+			System.out.println("Dry-Run - Exiting!");
+			return true;
+		}
+
+		if (containerPluginFile == null || !containerPluginFile.exists()) {
+			System.err.println("Container Plugin File not found - Downloading...");
+			try {
+				FileUtils.copyURLToFile(new URL("https://github.com/InventivetalentDev/MineTileContainer/releases/download/" + containerVersion + "/container-" + containerVersion + ".jar"), containerPluginFile);
+			} catch (IOException e) {
+				throw new RuntimeException("Failed to download container plugin", e);
+			}
+		}
+		if (routerPluginFile == null || !routerPluginFile.exists()) {
+			System.err.println("Router Plugin File not found - Downloading...");
+			try {
+				FileUtils.copyURLToFile(new URL("https://github.com/InventivetalentDev/MineTileRouter/releases/download/" + routerVersion + "/router-" + routerVersion + ".jar"), routerPluginFile);
+			} catch (IOException e) {
+				throw new RuntimeException("Failed to download router plugin", e);
+			}
 		}
 
 		containersDir = new File(output, "containers");
