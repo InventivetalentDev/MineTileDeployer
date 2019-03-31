@@ -160,6 +160,8 @@ public class Deployer implements Callable<Boolean> {
 			System.out.println(baseConfigData);
 		}
 
+		System.out.println();
+
 		if (radius == 0) {
 			System.err.println("Radius is set to 0");
 			return false;
@@ -179,6 +181,8 @@ public class Deployer implements Callable<Boolean> {
 
 		int totalSize = tileSize * radius * 2;
 		System.out.println("Total Map Size will be " + totalSize + "x" + totalSize + " chunks / ~" + (totalSize * 16) + "x" + (totalSize * 16) + " blocks");
+
+		System.out.println();
 
 		if (serverNamesFile != null && serverNamesFile.exists()) {
 			try {
