@@ -254,6 +254,9 @@ public class Deployer implements Callable<Boolean> {
 		System.out.println();
 
 		// Header
+		if (serverListFile.exists()) {
+			serverListFile.delete();
+		}
 		writeServerListEntry(new String[] { "ID", "Name", "Host", "Port", "X", "Z" });
 
 		makeBungee();
@@ -573,8 +576,8 @@ public class Deployer implements Callable<Boolean> {
 		return lines.toArray(new String[0]);
 	}
 
-	void writeServerListEntry(String[] entry) throws FileNotFoundException {
-		try (PrintWriter writer = new PrintWriter(serverListFile)) {
+	void writeServerListEntry(String[] entry) throws IOException {
+		try (PrintWriter writer = new PrintWriter(new FileWriter(serverListFile, true))) {
 			writer.println(String.join(",", entry));
 		}
 	}
