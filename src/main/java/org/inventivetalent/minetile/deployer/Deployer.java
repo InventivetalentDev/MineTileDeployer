@@ -461,7 +461,7 @@ public class Deployer implements Callable<Boolean> {
 
 		CompoundTag newRootTag = new CompoundTag();
 		newRootTag.set("Data", dataTag);
-		try (NBTOutputStream nbtOut = new NBTOutputStream(new FileOutputStream(newLevelFile))) {
+		try (NBTOutputStream nbtOut = new NBTOutputStream(new FileOutputStream(newLevelFile), true)) {
 			nbtOut.writeTag(newRootTag);
 		}
 	}
