@@ -176,10 +176,10 @@ public class Deployer implements Callable<Boolean> {
 			System.err.println("tileSize should be a multiple of 16");
 			return false;
 		}
+		System.out.println("Tile Size Radius is " + tileSize + " chunks / " + (tileSize * 16) + " blocks");
+		System.out.println("Each tile will contain a " + (tileSize * 2) + "x" + (tileSize * 2) + " chunks / " + (tileSize * 16 * 2) + "x" + (tileSize * 16 * 2) + " blocks section");
 
-		System.out.println("Each tile will contain a " + (tileSize * 2) + "x" + (tileSize * 2) + " chunk section");
-
-		int totalSize = tileSize * radius * 2;
+		int totalSize = tileSize * 2 * radius * 2;
 		System.out.println("Total Map Size will be " + totalSize + "x" + totalSize + " chunks / ~" + (totalSize * 16) + "x" + (totalSize * 16) + " blocks");
 
 		System.out.println();
@@ -355,22 +355,29 @@ public class Deployer implements Callable<Boolean> {
 			destRegionDir.mkdir();
 		}
 
-		int tileSizeMca = (int) Math.ceil((tileSize * 2.0) / 32.0D);
-		System.out.println("Copying and shifting " + tileSizeMca + "x" + tileSizeMca + " (" + (tileSizeMca * tileSizeMca) + ") mca files...");
+		int tileSizeMca = (int) Math.ceil(tileSize / 32.0D);
+		int tileSizeMca2 = (int) Math.ceil(tileSize * 2 / 32.0D);
+		System.out.println("Copying and shifting " + tileSizeMca2 + "x" + tileSizeMca2 + " (" + (tileSizeMca2 * tileSizeMca2) + ") mca files...");
 
 		// Surrounding chunks in every direction
-		//		tileSizeMca+=1;
+		tileSizeMca += 1;
+		tileSizeMca2 += 2;
+
+		//TODO: should probably multiply the x&z inputs instead of just adding
+
+		int rx = tileSizeMca2 * x;
+		int rz = tileSizeMca2 * z;
 
 		int rC = 0;
-		for (int sx = -tileSizeMca; sx <= tileSizeMca; sx++) {
-			for (int sz = -tileSizeMca; sz <= tileSizeMca; sz++) {
-				System.out.println("[R] " + (x + sx) + "," + (z + sz) + " -> " + sx + "," + sz + " (" + (++rC) + "/" + (tileSizeMca * tileSizeMca) + ")");
+		for (int sx = -tileSizeMca; sx < tileSizeMca; sx++) {
+			for (int sz = -tileSizeMca; sz < tileSizeMca; sz++) {
+				System.out.println("[R] " + (rx + sx) + "," + (rz + sz) + " -> " + sx + "," + sz + " [" + x + "," + z + "] (" + (++rC) + "/" + (tileSizeMca2 * tileSizeMca2) + ")");
 
-				File regionFile = new File(regionDirectory, "r." + (x + sx) + "." + (z + sz) + ".mca");
+				File regionFile = new File(regionDirectory, "r." + (rx + sx) + "." + (rz + sz) + ".mca");
 				if (!regionFile.exists()) {
-					System.err.println("Region File for " + (x + sx) + "," + (z + sz) + " not found. Skipping!");
+					System.err.println("Region File for " + (rx + sx) + "," + (rz + sz) + " not found. Skipping!");
 				} else {
-					copyMCAFile(regionFile, sx, sz, destRegionDir, x, z, c);
+					copyMCAFile(regionFile, sx, sz, destRegionDir, rx, rz, c);
 				}
 			}
 		}
