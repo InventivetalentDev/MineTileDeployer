@@ -284,7 +284,7 @@ public class Deployer implements Callable<Boolean> {
 				tileExecutor.execute(new Runnable() {
 					@Override
 					public void run() {
-						int c = tileCounter.incrementAndGet();
+						int c = tileCounter.getAndIncrement();
 						String[] currentServerEntry = new String[6];
 						System.out.println("[C] Working on " + rx + "," + rz + " (" + (c + 1) + "/" + totalCount + ")...");
 						try {
