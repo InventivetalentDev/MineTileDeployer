@@ -240,7 +240,7 @@ public class Deployer implements Callable<Boolean> {
 		if (serverHosts.length == 0) {
 			System.err.println("There are no server hosts set. Will use 127.0.0.1");
 		} else if (serverHosts.length < totalCount) {
-			System.err.println("There are less sever names set than the amount of generated containers. Will use 127.0.0.1 for leftovers.");
+			System.err.println("There are less sever names set than the amount of generated containers.");
 		}
 
 		File gameRuleFile = new File("./gamerules.yml");
