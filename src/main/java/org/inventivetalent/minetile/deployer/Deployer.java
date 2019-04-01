@@ -324,10 +324,11 @@ public class Deployer implements Callable<Boolean> {
 				final int rx = x + centerX;
 				final int rz = z + centerZ;
 
+				final int c = tileCounter.getAndIncrement();
+
 				tileExecutor.execute(new Runnable() {
 					@Override
 					public void run() {
-						int c = tileCounter.getAndIncrement();
 						String[] currentServerEntry = new String[6];
 						System.out.println("[C] Working on " + rx + "," + rz + " (" + (c + 1) + "/" + totalCount + ")...");
 						try {
@@ -383,7 +384,9 @@ public class Deployer implements Callable<Boolean> {
 		}
 	}
 
-	private void handleSection(int x, int z, int c, String[] currentServerEntry) throws IOException {
+	private void handleSection(int x, int z,final int c, String[] currentServerEntry) throws IOException {
+		System.out.println("Section #" + c);
+
 		String name = DEFAULT_NAME_FORMAT;
 		if (serverNames.length > 0) {
 			name = serverNames[c % serverNames.length];
@@ -488,7 +491,6 @@ public class Deployer implements Callable<Boolean> {
 
 	void updateServerProperties(File propertiesFile, int x, int z, int c, String[] currentServerEntry) throws IOException {
 		if (!propertiesFile.exists()) { return; }
-		//TODO: fix
 
 		try (FileInputStream in = new FileInputStream(propertiesFile)) {
 			Properties properties = new Properties();
