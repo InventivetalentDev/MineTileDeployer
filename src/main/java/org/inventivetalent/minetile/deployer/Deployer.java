@@ -130,8 +130,6 @@ public class Deployer implements Callable<Boolean> {
 	File                serverListFile = new File("./servers.csv");
 	int                 totalCount     = 1;
 
-	//	String[] currentServerEntry = new String[6];
-
 	Executor      tileExecutor;
 	AtomicInteger tileCounter = new AtomicInteger();
 
@@ -186,7 +184,7 @@ public class Deployer implements Callable<Boolean> {
 			System.err.println("tileSize should be a multiple of 16");
 			return false;
 		}
-		System.out.println("Tile Size Radius is " + (tileSize/32) +" regions / " + tileSize + " chunks / " + (tileSize * 16) + " blocks");
+		System.out.println("Tile Size Radius is " + (tileSize / 32) + " regions / " + tileSize + " chunks / " + (tileSize * 16) + " blocks");
 		System.out.println("Each tile will contain a " + (tileSize * 2 / 32) + "x" + (tileSize * 2 / 32) + " regions / " + (tileSize * 2) + "x" + (tileSize * 2) + " chunks / " + (tileSize * 16 * 2) + "x" + (tileSize * 16 * 2) + " blocks section");
 
 		int totalSize = tileSize * 2 * radius * 2;
@@ -286,19 +284,23 @@ public class Deployer implements Callable<Boolean> {
 				tileExecutor.execute(new Runnable() {
 					@Override
 					public void run() {
-						System.out.println("[C] Working on " + rx + "," + rz + " (" + (tileCounter.get() + 1) + "/" + totalCount + ")...");
+						int c = tileCounter.incrementAndGet();
+						String[] currentServerEntry = new String[6];
+						System.out.println("[C] Working on " + rx + "," + rz + " (" + (c + 1) + "/" + totalCount + ")...");
 						try {
-							handleSection(rx, rz, tileCounter.incrementAndGet());
+							handleSection(rx, rz, c, currentServerEntry);
+
+							writeServerListEntry(currentServerEntry);
 						} catch (Exception e) {
 							System.err.println("Exception on " + rx + "," + rz + "");
 							e.printStackTrace();
 						}
 
 						checkIfDone(tileCounter.decrementAndGet());
+
 					}
 				});
 
-				//				writeServerListEntry(currentServerEntry);
 			}
 		}
 
@@ -334,11 +336,11 @@ public class Deployer implements Callable<Boolean> {
 		}
 		File pluginConfig = new File(pluginDataDir, "config.yml");
 		if (!pluginConfig.exists()) {
-			writeConfigFor(pluginConfig, 0, 0, 0, true);
+			writeConfigFor(pluginConfig, 0, 0, 0, true, null);
 		}
 	}
 
-	private void handleSection(int x, int z, int c) throws IOException {
+	private void handleSection(int x, int z, int c, String[] currentServerEntry) throws IOException {
 		String name = DEFAULT_NAME_FORMAT;
 		if (serverNames.length > 0) {
 			name = serverNames[c % serverNames.length];
@@ -347,9 +349,9 @@ public class Deployer implements Callable<Boolean> {
 				.replace("%x", "" + x)
 				.replace("%z", "" + z);
 
-		//		currentServerEntry[1] = name;
-		//		currentServerEntry[4] = "" + x;
-		//		currentServerEntry[5] = "" + z;
+		currentServerEntry[1] = name;
+		currentServerEntry[4] = "" + x;
+		currentServerEntry[5] = "" + z;
 
 		File containerDir = new File(containersDir, name);
 		containerDir.mkdir();
@@ -360,7 +362,7 @@ public class Deployer implements Callable<Boolean> {
 		}
 
 		File propertiesFile = new File(containerDir, "server.properties");
-		updateServerProperties(propertiesFile, x, z, c);
+		updateServerProperties(propertiesFile, x, z, c, currentServerEntry);
 
 		File worldDir = new File(containerDir, worldName);
 		if (!worldDir.exists()) {
@@ -384,8 +386,8 @@ public class Deployer implements Callable<Boolean> {
 		System.out.println("Copying and shifting " + tileSizeMca2 + "x" + tileSizeMca2 + " (" + (tileSizeMca2 * tileSizeMca2) + ") mca files...");
 
 		// Surrounding chunks in every direction
-//		tileSizeMca += 1;
-//		tileSizeMca2 += 2;
+		//		tileSizeMca += 1;
+		//		tileSizeMca2 += 2;
 
 		//TODO: should probably multiply the x&z inputs instead of just adding
 
@@ -393,12 +395,12 @@ public class Deployer implements Callable<Boolean> {
 		int rz = tileSizeMca2 * z;
 
 		int rC = 0;
-		for (int sx = -tileSizeMca-1; sx <= tileSizeMca; sx++) {
-			for (int sz = -tileSizeMca-1; sz <= tileSizeMca; sz++) {
+		for (int sx = -tileSizeMca - 1; sx <= tileSizeMca; sx++) {
+			for (int sz = -tileSizeMca - 1; sz <= tileSizeMca; sz++) {
 				int xx = rx + sx;
 				int zz = rz + sz;
 
-				System.out.println("[R]  [" + x + "," + z + "] " + xx + "," + zz + " -> " + sx + "," + sz+" (" + (++rC) + "/" + (tileSizeMca2 * tileSizeMca2) + ")");
+				System.out.println("[R]  [" + x + "," + z + "] " + xx + "," + zz + " -> " + sx + "," + sz + " (" + (++rC) + "/" + (tileSizeMca2 * tileSizeMca2) + ")");
 
 				File sourceRegionFile = new File(regionDirectory, "r." + xx + "." + zz + ".mca");
 				if (!sourceRegionFile.exists()) {
@@ -423,7 +425,7 @@ public class Deployer implements Callable<Boolean> {
 			pluginDataDir.mkdir();
 		}
 		File pluginConfig = new File(pluginDataDir, "config.yml");
-		writeConfigFor(pluginConfig, x, z, c, false);
+		writeConfigFor(pluginConfig, x, z, c, false, currentServerEntry);
 
 		if (gzip) {
 			System.out.println("Creating Tarball...");
@@ -434,7 +436,7 @@ public class Deployer implements Callable<Boolean> {
 		}
 	}
 
-	void updateServerProperties(File propertiesFile, int x, int z, int c) throws IOException {
+	void updateServerProperties(File propertiesFile, int x, int z, int c, String[] currentServerEntry) throws IOException {
 		if (!propertiesFile.exists()) { return; }
 		//TODO: fix
 
@@ -443,10 +445,10 @@ public class Deployer implements Callable<Boolean> {
 			properties.load(in);
 			if (sequentialPorts) {
 				String port = "" + (portStart + c);
-				//				currentServerEntry[3] = port;
+				currentServerEntry[3] = port;
 				properties.setProperty("server-port", port);
 			} else {
-				//				currentServerEntry[3] = properties.getProperty("server-port");
+				currentServerEntry[3] = properties.getProperty("server-port");
 			}
 
 			try (FileOutputStream out = new FileOutputStream(propertiesFile)) {
@@ -494,14 +496,14 @@ public class Deployer implements Callable<Boolean> {
 		}
 	}
 
-	void writeConfigFor(File pluginConfig, int x, int z, int c, boolean bungee) throws IOException {
+	void writeConfigFor(File pluginConfig, int x, int z, int c, boolean bungee, String[] currentServerEntry) throws IOException {
 		Map<String, Object> containerConfig = new HashMap<String, Object>(baseConfigData);
 		if (!bungee) {
 			String host = "127.0.0.1";
 			if (serverHosts.length > 0) {
 				host = serverHosts[c % serverHosts.length];
 			}
-			//			currentServerEntry[2] = host;
+			currentServerEntry[2] = host;
 
 			Map<String, Object> serverConfig = (Map<String, Object>) containerConfig.getOrDefault("server", new HashMap<String, Object>());
 			if (!serverConfig.containsKey("host")) {
@@ -515,7 +517,7 @@ public class Deployer implements Callable<Boolean> {
 			containerConfig.put("tile", tileConfig);
 
 			UUID id = UUID.randomUUID();
-			//			currentServerEntry[0] = id.toString();
+			currentServerEntry[0] = id.toString();
 			containerConfig.put("serverId", id.toString());
 		}
 
