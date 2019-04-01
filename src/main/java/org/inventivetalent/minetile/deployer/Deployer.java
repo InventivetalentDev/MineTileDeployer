@@ -106,6 +106,10 @@ public class Deployer implements Callable<Boolean> {
 						description = "Alternative to --hosts to load container host addresses from file")
 	private File serverHostsFile;
 
+	@CommandLine.Option(names = { "--overwriteGameRules" },
+						description = "Whether to enable protective game rules (e.g. mobGriefing:false, doWeatherCycle:false, etc.) - custom values can be specified in a ./gamerules.yml file")
+	private boolean overwriteGameRules = false;
+
 	@CommandLine.Option(names = { "--gzip", "--zip" },
 						description = "Whether to create a .tar.gz archive of the individual containers instead of regular directories")
 	private boolean gzip = false;
@@ -129,6 +133,20 @@ public class Deployer implements Callable<Boolean> {
 	File                bungeeDir;
 	File                serverListFile = new File("./servers.csv");
 	int                 totalCount     = 1;
+
+	Map<String, String> gameRuleOverrides = new HashMap<String, String>() {{
+		put("doDaylightCycle", "false");
+		put("commandBlockOutput", "false");
+		put("doEntityDrops", "false");
+		put("doFireTick", "false");
+		put("doLimitedCrafting", "true");
+		put("doMobLoot", "false");
+		put("doMobSpawning", "false");
+		put("doTileDrops", "false");
+		put("doWeatherCycle", "false");
+		put("mobGriefing", "false");
+		put("spectatorsGenerateChunks", "false");
+	}};
 
 	Executor      tileExecutor;
 	AtomicInteger tileCounter = new AtomicInteger();
@@ -218,6 +236,20 @@ public class Deployer implements Callable<Boolean> {
 			System.err.println("There are no server hosts set. Will use 127.0.0.1");
 		} else if (serverHosts.length < totalCount) {
 			System.err.println("There are less sever names set than the amount of generated containers. Will use 127.0.0.1 for leftovers.");
+		}
+
+		File gameRuleFile = new File("./gamerules.yml");
+		if (overwriteGameRules) {
+			if (gameRuleFile.exists()) {
+				try (FileReader reader = new FileReader(gameRuleFile)) {
+					Map<String, String> fileRules = new Yaml().load(reader);
+					gameRuleOverrides.putAll(fileRules);
+				}
+			}
+
+			System.out.println("Game Rule Overrides:");
+			gameRuleOverrides.forEach((k,v)-> System.out.println(k + ": " + v));
+			System.out.println();
 		}
 
 		///// EXIT if dry-run
@@ -488,6 +520,14 @@ public class Deployer implements Callable<Boolean> {
 		generatorOptionsTag.set("biome", "minecraft:the_void");
 		generatorOptionsTag.set("structures", new CompoundTag("structures"));
 		dataTag.set("generatorOptions", generatorOptionsTag);
+
+		if (overwriteGameRules) {
+			CompoundTag gameRulesTag = dataTag.getOrCreateCompound("GameRules");
+			if (gameRulesTag == null) { gameRulesTag = new CompoundTag("GameRules"); }
+			final CompoundTag finalGameRulesTag = gameRulesTag;
+			gameRuleOverrides.forEach((k,v)-> finalGameRulesTag.set(k, new StringTag(k, v)));
+			dataTag.set("GameRules", finalGameRulesTag);
+		}
 
 		CompoundTag newRootTag = new CompoundTag();
 		newRootTag.set("Data", dataTag);
