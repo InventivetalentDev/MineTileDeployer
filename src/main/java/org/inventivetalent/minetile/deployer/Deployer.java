@@ -479,11 +479,12 @@ public class Deployer implements Callable<Boolean> {
 			try (TarballMaker tarballMaker = new TarballMaker(tarFile)) {
 				tarballMaker.addRecursive(containerDir, "");
 			}
-			containerDir.deleteOnExit();
 
 			if (perHostDirectories) {
 				FileUtils.moveFileToDirectory(tarFile, new File(containersDir, currentServerEntry[2]), true);
 			}
+
+			containerDir.delete();
 		} else if (perHostDirectories) {
 			FileUtils.moveDirectoryToDirectory(containerDir, new File(containersDir, currentServerEntry[2]), true);
 		}
