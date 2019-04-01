@@ -22,8 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 					 synopsisHeading = "%n",
 					 descriptionHeading = "%n@|bold,underline Description|@:%n%n",
 					 parameterListHeading = "%n@|bold,underline Parameters|@:%n",
-					 optionListHeading = "%n@|bold,underline Options|@:%n",
-					 header = "Record changes to the repository.")
+					 optionListHeading = "%n@|bold,underline Options|@:%n")
 public class Deployer implements Callable<Boolean> {
 
 	static final String DEFAULT_NAME_FORMAT = "MineTile.%x.%z";
@@ -91,6 +90,7 @@ public class Deployer implements Callable<Boolean> {
 	private int tileSize = 16;
 
 	@CommandLine.Option(names = { "--names" },
+						split = ",",
 						description = "List of names for the generated containers - these will be used for the output directories")
 	private String[] serverNames = new String[0];
 
@@ -99,6 +99,7 @@ public class Deployer implements Callable<Boolean> {
 	private File serverNamesFile;
 
 	@CommandLine.Option(names = { "--hosts" },
+						split = ",",
 						description = "List of hosts to use for the generated containers (e.g. 127.0.0.1)")
 	private String[] serverHosts = new String[0];
 
@@ -113,6 +114,10 @@ public class Deployer implements Callable<Boolean> {
 	@CommandLine.Option(names = { "--gzip", "--zip" },
 						description = "Whether to create a .tar.gz archive of the individual containers instead of regular directories")
 	private boolean gzip = false;
+
+	@CommandLine.Option(names = { "--perHostDirectories", "--perHostDirs" },
+						description = "Whether to move containers with the same host address into the same directory")
+	private boolean perHostDirectories = false;
 
 	@CommandLine.Option(names = { "--threads" },
 						description = "Number of threads to use for creating and copying tile data")
@@ -248,7 +253,7 @@ public class Deployer implements Callable<Boolean> {
 			}
 
 			System.out.println("Game Rule Overrides:");
-			gameRuleOverrides.forEach((k,v)-> System.out.println(k + ": " + v));
+			gameRuleOverrides.forEach((k, v) -> System.out.println(k + ": " + v));
 			System.out.println();
 		}
 
@@ -285,6 +290,12 @@ public class Deployer implements Callable<Boolean> {
 		bungeeDir = new File(output, "bungee");
 		if (!bungeeDir.exists()) {
 			bungeeDir.mkdir();
+		}
+
+		if (perHostDirectories) {
+			for (int i = 0; i < serverHosts.length; i++) {
+				new File(containersDir, serverHosts[i]).mkdir();
+			}
 		}
 
 		try {
@@ -461,10 +472,17 @@ public class Deployer implements Callable<Boolean> {
 
 		if (gzip) {
 			System.out.println("Creating Tarball...");
-			try (TarballMaker tarballMaker = new TarballMaker(new File(output, name + ".tar.gz"))) {
+			File tarFile = new File(containersDir, name + ".tar.gz");
+			try (TarballMaker tarballMaker = new TarballMaker(tarFile)) {
 				tarballMaker.addRecursive(containerDir, "");
 			}
 			containerDir.deleteOnExit();
+
+			if (perHostDirectories) {
+				FileUtils.moveFileToDirectory(tarFile, new File(containersDir, currentServerEntry[2]), true);
+			}
+		} else if (perHostDirectories) {
+			FileUtils.moveDirectoryToDirectory(containerDir, new File(containersDir, currentServerEntry[2]), true);
 		}
 	}
 
@@ -525,7 +543,7 @@ public class Deployer implements Callable<Boolean> {
 			CompoundTag gameRulesTag = dataTag.getOrCreateCompound("GameRules");
 			if (gameRulesTag == null) { gameRulesTag = new CompoundTag("GameRules"); }
 			final CompoundTag finalGameRulesTag = gameRulesTag;
-			gameRuleOverrides.forEach((k,v)-> finalGameRulesTag.set(k, new StringTag(k, v)));
+			gameRuleOverrides.forEach((k, v) -> finalGameRulesTag.set(k, new StringTag(k, v)));
 			dataTag.set("GameRules", finalGameRulesTag);
 		}
 
