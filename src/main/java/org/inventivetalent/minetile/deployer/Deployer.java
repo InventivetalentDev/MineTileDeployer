@@ -45,6 +45,10 @@ public class Deployer implements Callable<Boolean> {
 						description = "Output Directory")
 	private File output = new File("./deploy");
 
+	@CommandLine.Option(names = { "-m", "--mode" },
+						description = "Deployer Mode")
+	private DeployMode mode = DeployMode.COMPLETE;
+
 	@CommandLine.Option(names = { "-c", "--config" },
 						description = "Base Configuration to use for all MineTile containers (e.g. for Redis config)")
 	private File baseConfig = new File("./config.yml");
@@ -191,6 +195,11 @@ public class Deployer implements Callable<Boolean> {
 			System.out.println(baseConfigData);
 		}
 
+		if (mode == null) {
+			mode = DeployMode.COMPLETE;
+		}
+		System.out.println("Running in " + mode.name() + " mode");
+
 		System.out.println();
 
 		if (radius == 0) {
@@ -315,7 +324,7 @@ public class Deployer implements Callable<Boolean> {
 		if (serverListFile.exists()) {
 			serverListFile.delete();
 		}
-		writeServerListEntry(new String[] { "ID", "Name", "Host", "Port", "X", "Z" });
+		writeServerListEntry(new String[] { "ID", "Name", "Host", "Port", "X", "Z", "# Regions", "# Chunks" });
 
 		makeBungee();
 
@@ -329,7 +338,7 @@ public class Deployer implements Callable<Boolean> {
 				tileExecutor.execute(new Runnable() {
 					@Override
 					public void run() {
-						String[] currentServerEntry = new String[6];
+						String[] currentServerEntry = new String[8];
 						System.out.println("[C] Working on " + rx + "," + rz + " (" + (c + 1) + "/" + totalCount + ")...");
 						try {
 							handleSection(rx, rz, c, currentServerEntry);
@@ -384,7 +393,7 @@ public class Deployer implements Callable<Boolean> {
 		}
 	}
 
-	private void handleSection(int x, int z,final int c, String[] currentServerEntry) throws IOException {
+	private void handleSection(int x, int z, final int c, String[] currentServerEntry) throws IOException {
 		System.out.println("Section #" + c);
 
 		String name = DEFAULT_NAME_FORMAT;
@@ -402,76 +411,90 @@ public class Deployer implements Callable<Boolean> {
 		File containerDir = new File(containersDir, name);
 		containerDir.mkdir();
 
-		// Use server base if it exists
-		if (serverBase != null && serverBase.exists()) {
-			FileUtils.copyDirectory(serverBase, containerDir);
+		if (mode.copyServer) {
+			// Use server base if it exists
+			if (serverBase != null && serverBase.exists()) {
+				FileUtils.copyDirectory(serverBase, containerDir);
+			}
 		}
 
 		File propertiesFile = new File(containerDir, "server.properties");
 		updateServerProperties(propertiesFile, x, z, c, currentServerEntry);
 
-		File worldDir = new File(containerDir, worldName);
-		if (!worldDir.exists()) {
-			worldDir.mkdir();
-		}
-		File levelFile = new File(worldDir, "level.dat");
-		try {
-			writeLevelFile(levelFile, x, z, c);
-		} catch (Exception e) {
-			System.err.println("Failed to write new level.dat file");
-			e.printStackTrace();
-		}
+		if (mode.copyWorld) {
+			File worldDir = new File(containerDir, worldName);
+			if (!worldDir.exists()) {
+				worldDir.mkdir();
+			}
+			File levelFile = new File(worldDir, "level.dat");
+			try {
+				writeLevelFile(levelFile, x, z, c);
+			} catch (Exception e) {
+				System.err.println("Failed to write new level.dat file");
+				e.printStackTrace();
+			}
 
-		File destRegionDir = new File(worldDir, "region");
-		if (!destRegionDir.exists()) {
-			destRegionDir.mkdir();
-		}
+			File destRegionDir = new File(worldDir, "region");
+			if (!destRegionDir.exists()) {
+				destRegionDir.mkdir();
+			}
 
-		int tileSizeMca = (int) Math.ceil(tileSize / 32.0D);
-		int tileSizeMca2 = tileSizeMca * 2;
-		System.out.println("Copying and shifting " + tileSizeMca2 + "x" + tileSizeMca2 + " (" + (tileSizeMca2 * tileSizeMca2) + ") mca files...");
+			int tileSizeMca = (int) Math.ceil(tileSize / 32.0D);
+			int tileSizeMca2 = tileSizeMca * 2;
+			System.out.println("Copying and shifting " + tileSizeMca2 + "x" + tileSizeMca2 + " (" + (tileSizeMca2 * tileSizeMca2) + ") mca files...");
 
-		// Surrounding chunks in every direction
-		//		tileSizeMca += 1;
-		//		tileSizeMca2 += 2;
+			// Surrounding chunks in every direction
+			//		tileSizeMca += 1;
+			//		tileSizeMca2 += 2;
 
-		//TODO: should probably multiply the x&z inputs instead of just adding
+			//TODO: should probably multiply the x&z inputs instead of just adding
 
-		int rx = tileSizeMca2 * x;
-		int rz = tileSizeMca2 * z;
+			int rx = tileSizeMca2 * x;
+			int rz = tileSizeMca2 * z;
 
-		int rC = 0;
-		for (int sx = -tileSizeMca - 1; sx <= tileSizeMca; sx++) {
-			for (int sz = -tileSizeMca - 1; sz <= tileSizeMca; sz++) {
-				int xx = rx + sx;
-				int zz = rz + sz;
+			int regionCounter = 0;
+			int chunkCounter = 0;
 
-				System.out.println("[R]  [" + x + "," + z + "] " + xx + "," + zz + " -> " + sx + "," + sz + " (" + (++rC) + "/" + (tileSizeMca2 * tileSizeMca2) + ")");
+			int rC = 0;
+			for (int sx = -tileSizeMca - 1; sx <= tileSizeMca; sx++) {
+				for (int sz = -tileSizeMca - 1; sz <= tileSizeMca; sz++) {
+					int xx = rx + sx;
+					int zz = rz + sz;
 
-				File sourceRegionFile = new File(regionDirectory, "r." + xx + "." + zz + ".mca");
-				if (!sourceRegionFile.exists()) {
-					System.err.println("Region File for " + xx + "," + zz + " not found. Skipping!");
-				} else {
-					copyMCAFile(sourceRegionFile, sx, sz, destRegionDir, rx, rz, c);
+					System.out.println("[R]  [" + x + "," + z + "] " + xx + "," + zz + " -> " + sx + "," + sz + " (" + (++rC) + "/" + (tileSizeMca2 * tileSizeMca2) + ")");
+
+					File sourceRegionFile = new File(regionDirectory, "r." + xx + "." + zz + ".mca");
+					if (!sourceRegionFile.exists()) {
+						System.err.println("Region File for " + xx + "," + zz + " not found. Skipping!");
+					} else {
+						int r = copyMCAFile(sourceRegionFile, sx, sz, destRegionDir, rx, rz, c);
+						chunkCounter += r;
+						regionCounter++;
+					}
 				}
 			}
+
+			currentServerEntry[6] = "" + regionCounter;
+			currentServerEntry[7] = "" + chunkCounter;
 		}
 
-		// Plugin jar + container config
-		File pluginDir = new File(containerDir, "plugins");
-		if (!pluginDir.exists()) {
-			pluginDir.mkdir();
+		if (mode.updateConfig) {
+			// Plugin jar + container config
+			File pluginDir = new File(containerDir, "plugins");
+			if (!pluginDir.exists()) {
+				pluginDir.mkdir();
+			}
+			File destPluginFile = new File(pluginDir, "MineTileContainer.jar");
+			if (!destPluginFile.exists()) {
+				FileUtils.copyFile(containerPluginFile, destPluginFile);
+			}
+			File pluginDataDir = new File(pluginDir, "MineTileContainer");
+			if (!pluginDataDir.exists()) {
+				pluginDataDir.mkdir();
+			}
+			File pluginConfig = new File(pluginDataDir, "config.yml");
+			writeConfigFor(pluginConfig, x, z, c, false, currentServerEntry);
 		}
-		File destPluginFile = new File(pluginDir, "MineTileContainer.jar");
-		if (!destPluginFile.exists()) {
-			FileUtils.copyFile(containerPluginFile, destPluginFile);
-		}
-		File pluginDataDir = new File(pluginDir, "MineTileContainer");
-		if (!pluginDataDir.exists()) {
-			pluginDataDir.mkdir();
-		}
-		File pluginConfig = new File(pluginDataDir, "config.yml");
-		writeConfigFor(pluginConfig, x, z, c, false, currentServerEntry);
 
 		if (gzip) {
 			System.out.println("Creating Tarball...");
@@ -587,7 +610,9 @@ public class Deployer implements Callable<Boolean> {
 		}
 	}
 
-	void copyMCAFile(File in, int tileX, int tileZ, File targetDir, int x, int z, int c) throws IOException {
+	int copyMCAFile(File in, int tileX, int tileZ, File targetDir, int x, int z, int c) throws IOException {
+		int r = 0;
+
 		File out = new File(targetDir, "r." + tileX + "." + tileZ + ".mca");
 		if (out.exists()) {
 			out.delete();
@@ -653,6 +678,8 @@ public class Deployer implements Callable<Boolean> {
 
 														rootTag.set("Level", levelTag);
 														nbtOut.writeTag(rootTag);
+
+														r++;
 													}
 												} catch (Exception e) {
 													e.printStackTrace();
@@ -669,6 +696,8 @@ public class Deployer implements Callable<Boolean> {
 				}
 			}
 		}
+
+		return r;
 	}
 
 	String[] loadLinesFromFile(File file) throws IOException {
