@@ -429,7 +429,7 @@ public class Deployer implements Callable<Boolean> {
 		}
 
 		if (mode.createInitScript) {
-			List<String> lines = IOUtils.readLines(getClass().getResourceAsStream("templates/containerInitScript.sh"), "utf8");
+			List<String> lines = IOUtils.readLines(getClass().getResourceAsStream("/templates/containerInitScript.sh"), "utf8");
 			try (PrintWriter writer = new PrintWriter(new FileWriter(new File(containerDir, "init.sh")))) {
 				for (String l : lines) {
 					l = l.replaceAll("--CONTAINER_VERSION--", containerVersion);
