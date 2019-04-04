@@ -374,6 +374,13 @@ public class Deployer implements Callable<Boolean> {
 
 			System.out.println();
 			System.out.println("List of Servers written to " + serverListFile);
+
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			System.exit(0);
 		}
 	}
 
