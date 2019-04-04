@@ -23,14 +23,14 @@ public enum DeployMode {
 	CONFIG(false, false, true, false, false);
 
 	public final boolean copyServer;
-	public final boolean createServerScript;
+	public final boolean createInitScript;
 	public final boolean updateConfig;
 	public final boolean copyWorld;
 	public final boolean copyPlugins;
 
-	DeployMode(boolean copyServer, boolean createServerScript, boolean updateConfig, boolean copyWorld, boolean copyPlugins) {
+	DeployMode(boolean copyServer, boolean createInitScript, boolean updateConfig, boolean copyWorld, boolean copyPlugins) {
 		this.copyServer = copyServer;
-		this.createServerScript = createServerScript;
+		this.createInitScript = createInitScript;
 		this.updateConfig = updateConfig;
 		this.copyWorld = copyWorld;
 		this.copyPlugins = copyPlugins;
