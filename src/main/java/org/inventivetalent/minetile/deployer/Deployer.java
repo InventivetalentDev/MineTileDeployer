@@ -274,20 +274,22 @@ public class Deployer implements Callable<Boolean> {
 
 		tileExecutor = Executors.newFixedThreadPool(threads);
 
-		if (containerPluginFile == null || !containerPluginFile.exists()) {
-			System.err.println("Container Plugin File not found - Downloading...");
-			try {
-				FileUtils.copyURLToFile(new URL("https://github.com/InventivetalentDev/MineTileContainer/releases/download/" + containerVersion + "/container-" + containerVersion + ".jar"), containerPluginFile);
-			} catch (IOException e) {
-				throw new RuntimeException("Failed to download container plugin", e);
+		if (mode.copyPlugins) {
+			if (containerPluginFile == null || !containerPluginFile.exists()) {
+				System.err.println("Container Plugin File not found - Downloading...");
+				try {
+					FileUtils.copyURLToFile(new URL("https://github.com/InventivetalentDev/MineTileContainer/releases/download/" + containerVersion + "/container-" + containerVersion + ".jar"), containerPluginFile);
+				} catch (IOException e) {
+					throw new RuntimeException("Failed to download container plugin", e);
+				}
 			}
-		}
-		if (routerPluginFile == null || !routerPluginFile.exists()) {
-			System.err.println("Router Plugin File not found - Downloading...");
-			try {
-				FileUtils.copyURLToFile(new URL("https://github.com/InventivetalentDev/MineTileRouter/releases/download/" + routerVersion + "/router-" + routerVersion + ".jar"), routerPluginFile);
-			} catch (IOException e) {
-				throw new RuntimeException("Failed to download router plugin", e);
+			if (routerPluginFile == null || !routerPluginFile.exists()) {
+				System.err.println("Router Plugin File not found - Downloading...");
+				try {
+					FileUtils.copyURLToFile(new URL("https://github.com/InventivetalentDev/MineTileRouter/releases/download/" + routerVersion + "/router-" + routerVersion + ".jar"), routerPluginFile);
+				} catch (IOException e) {
+					throw new RuntimeException("Failed to download router plugin", e);
+				}
 			}
 		}
 
@@ -380,8 +382,8 @@ public class Deployer implements Callable<Boolean> {
 			pluginDir.mkdir();
 		}
 		File destPluginFile = new File(pluginDir, "MineTileRouter.jar");
-		if (!destPluginFile.exists()) {
-			FileUtils.copyFile(containerPluginFile, destPluginFile);
+		if (!destPluginFile.exists() && mode.copyPlugins) {
+			FileUtils.copyFile(routerPluginFile, destPluginFile);
 		}
 		File pluginDataDir = new File(pluginDir, "MineTileRouter");
 		if (!pluginDataDir.exists()) {
@@ -485,7 +487,7 @@ public class Deployer implements Callable<Boolean> {
 				pluginDir.mkdir();
 			}
 			File destPluginFile = new File(pluginDir, "MineTileContainer.jar");
-			if (!destPluginFile.exists()) {
+			if (!destPluginFile.exists() && mode.copyPlugins) {
 				FileUtils.copyFile(containerPluginFile, destPluginFile);
 			}
 			File pluginDataDir = new File(pluginDir, "MineTileContainer");
