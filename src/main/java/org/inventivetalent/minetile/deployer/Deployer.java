@@ -582,6 +582,7 @@ public class Deployer implements Callable<Boolean> {
 	void updateServerProperties(File propertiesFile, int x, int z, int c, String[] currentServerEntry) throws IOException {
 		if (!propertiesFile.exists()) { return; }
 
+		currentServerEntry[3] = "25565";
 		try (FileInputStream in = new FileInputStream(propertiesFile)) {
 			Properties properties = new Properties();
 			properties.load(in);
