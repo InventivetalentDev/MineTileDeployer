@@ -683,7 +683,7 @@ public class Deployer implements Callable<Boolean> {
 	}
 
 	void writeConfigFor(File pluginConfig, int x, int z, int c, boolean bungee, String[] currentServerEntry) throws IOException {
-		Map<String, Object> containerConfig = new HashMap<String, Object>(baseConfigData);
+		Map<String, Object> config = new HashMap<String, Object>(baseConfigData);
 		if (!bungee) {
 			String host = "127.0.0.1";
 			if (serverHosts.length > 0) {
@@ -691,24 +691,28 @@ public class Deployer implements Callable<Boolean> {
 			}
 			currentServerEntry[2] = host;
 
-			Map<String, Object> serverConfig = (Map<String, Object>) containerConfig.getOrDefault("server", new HashMap<String, Object>());
+			Map<String, Object> serverConfig = (Map<String, Object>) config.getOrDefault("server", new HashMap<String, Object>());
 			if (!serverConfig.containsKey("host")) {
 				serverConfig.put("host", host);
 			}
-			containerConfig.put("server", serverConfig);
+			config.put("server", serverConfig);
 
-			Map<String, Object> tileConfig = (Map<String, Object>) containerConfig.getOrDefault("tile", new HashMap<String, Object>());
+			Map<String, Object> tileConfig = (Map<String, Object>) config.getOrDefault("tile", new HashMap<String, Object>());
 			tileConfig.put("x", x);
 			tileConfig.put("z", z);
-			containerConfig.put("tile", tileConfig);
+			config.put("tile", tileConfig);
 
 			UUID id = UUID.randomUUID();
 			currentServerEntry[0] = id.toString();
-			containerConfig.put("serverId", id.toString());
+			config.put("serverId", id.toString());
+		}else{
+			Map<String, Object> defaultsMap = (Map<String, Object>) config.getOrDefault("defaults", new HashMap<>());
+			defaultsMap.put("tileSize", tileSize);
+			config.put("defaults", defaultsMap);
 		}
 
 		try (FileWriter writer = new FileWriter(pluginConfig)) {
-			new Yaml().dump(containerConfig, writer);
+			new Yaml().dump(config, writer);
 		}
 	}
 
