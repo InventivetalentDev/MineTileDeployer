@@ -372,6 +372,11 @@ public class Deployer implements Callable<Boolean> {
 			System.out.println("Bungeecord and router plugin are in      " + bungeeDir);
 			System.out.println("Containers with plugin and world are in  " + containersDir);
 
+			if (mode.createInitScript) {
+				System.out.println();
+				System.out.println("init.sh script has been added to all containers. Make sure to run it before starting the servers!");
+			}
+
 			System.out.println();
 			System.out.println("List of Servers written to " + serverListFile);
 
