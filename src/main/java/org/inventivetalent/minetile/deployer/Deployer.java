@@ -136,6 +136,14 @@ public class Deployer implements Callable<Boolean> {
 						description = "Whether to move containers with the same host address into the same directory")
 	private boolean perHostDirectories = false;
 
+	@CommandLine.Option(names = { "--scriptServerBase" },
+						description = "Directory for the init.sh script to copy server files from when running in SCRIPT mode")
+	private String scriptServerBase = "";
+
+	@CommandLine.Option(names = { "--scriptServerDownload" },
+						description = "Directory for the init.sh script to download server .jar from when running in SCRIPT mode")
+	private String scriptServerDownload = "https://papermc.io/ci/job/Paper/lastSuccessfulBuild/artifact/paperclip.jar";
+
 	@CommandLine.Option(names = { "--threads" },
 						description = "Number of threads to use for creating and copying tile data")
 	private int threads = 4;
@@ -452,6 +460,8 @@ public class Deployer implements Callable<Boolean> {
 			try (PrintWriter writer = new PrintWriter(new FileWriter(new File(containerDir, "init.sh")))) {
 				for (String l : lines) {
 					l = l.replaceAll("--CONTAINER_VERSION--", containerVersion);
+					l = l.replaceAll("--SERVER_DOWNLOAD--", scriptServerDownload);
+					l = l.replaceAll("--SERVER_BASE--", scriptServerBase);
 					writer.println(l);
 				}
 
