@@ -555,26 +555,28 @@ public class Deployer implements Callable<Boolean> {
 			writeConfigFor(pluginConfig, x, z, c, false, currentServerEntry);
 		}
 
-		if (gzip) {
-			System.out.println("Creating Tarball...");
-			File tarFile = new File(containersDir, name + ".tar.gz");
-			try (TarballMaker tarballMaker = new TarballMaker(tarFile)) {
-				tarballMaker.addRecursive(containerDir, "");
-			}
-
-			if (perHostDirectories) {
-				FileUtils.moveFileToDirectory(tarFile, new File(containersDir, currentServerEntry[2]), true);
-			}
-
-			containerDir.delete();
-		} else if (perHostDirectories) {
-			FileUtils.moveDirectoryToDirectory(containerDir, new File(containersDir, currentServerEntry[2]), true);
-		}
-
 		if (mode.copyWorld && regionCounter == 0) {
 			// Delete empty container
 			containerDir.delete();
+		}else {
+			if (gzip) {
+				System.out.println("Creating Tarball...");
+				File tarFile = new File(containersDir, name + ".tar.gz");
+				try (TarballMaker tarballMaker = new TarballMaker(tarFile)) {
+					tarballMaker.addRecursive(containerDir, "");
+				}
+
+				if (perHostDirectories) {
+					FileUtils.moveFileToDirectory(tarFile, new File(containersDir, currentServerEntry[2]), true);
+				}
+
+				containerDir.delete();
+			} else if (perHostDirectories) {
+				FileUtils.moveDirectoryToDirectory(containerDir, new File(containersDir, currentServerEntry[2]), true);
+			}
 		}
+
+
 
 		return regionCounter;
 	}
