@@ -477,6 +477,11 @@ public class Deployer implements Callable<Boolean> {
 			updateServerProperties(propertiesFile, x, z, c, currentServerEntry);
 		}
 
+		File spigotConfig = new File(containerDir, "spigot.yml");
+		if (mode.updateConfig) {
+			updateSpigotConfig(spigotConfig, x, z, c);
+		}
+
 		int regionCounter = 0;
 		int chunkCounter = 0;
 		if (mode.copyWorld) {
@@ -600,6 +605,23 @@ public class Deployer implements Callable<Boolean> {
 
 		try (FileOutputStream out = new FileOutputStream(propertiesFile)) {
 			properties.store(out, null);
+		}
+	}
+
+	void updateSpigotConfig(File configFile, int x, int z, int c) throws IOException {
+		Map<String, Object> config = new HashMap<>();
+		if (configFile.exists()) {
+			try (FileReader reader = new FileReader(configFile)) {
+				config = new Yaml().load(reader);
+			}
+		}
+
+		Map<String, Object> settingsMap = (Map<String, Object>) config.getOrDefault("settings", new HashMap<>());
+		settingsMap.put("bungeecord", true);
+		config.put("settings", settingsMap);
+
+		try (FileWriter writer = new FileWriter(configFile)) {
+			new Yaml().dump(config, writer);
 		}
 	}
 
