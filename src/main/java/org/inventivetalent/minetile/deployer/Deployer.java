@@ -128,6 +128,10 @@ public class Deployer implements Callable<Boolean> {
 						description = "Whether to enable protective game rules (e.g. mobGriefing:false, doWeatherCycle:false, etc.) - custom values can be specified in a ./gamerules.yml file")
 	private boolean overwriteGameRules = false;
 
+	@CommandLine.Option(names={"--deleteEmptyTiles"},
+						description = "Delete empty tile directories (without any world sections)")
+	private boolean deleteEmptyTiles=true;
+
 	@CommandLine.Option(names = { "--gzip", "--zip" },
 						description = "Whether to create a .tar.gz archive of the individual containers instead of regular directories")
 	private boolean gzip = false;
@@ -366,9 +370,11 @@ public class Deployer implements Callable<Boolean> {
 						String[] currentServerEntry = new String[8];
 						System.out.println("[C] Working on " + rx + "," + rz + " (" + (c + 1) + "/" + totalCount + ")...");
 						try {
-							handleSection(rx, rz, c, currentServerEntry);
+							int regionCount  = handleSection(rx, rz, c, currentServerEntry);
 
-							writeServerListEntry(currentServerEntry);
+							if(!mode.copyWorld||regionCount>0) {
+								writeServerListEntry(currentServerEntry);
+							}
 						} catch (Exception e) {
 							System.err.println("Exception on " + rx + "," + rz + "");
 							e.printStackTrace();
@@ -430,7 +436,7 @@ public class Deployer implements Callable<Boolean> {
 		}
 	}
 
-	private void handleSection(int x, int z, final int c, String[] currentServerEntry) throws IOException {
+	private int handleSection(int x, int z, final int c, String[] currentServerEntry) throws IOException {
 		System.out.println("Section #" + c);
 
 		String name = DEFAULT_NAME_FORMAT;
@@ -473,6 +479,8 @@ public class Deployer implements Callable<Boolean> {
 		File propertiesFile = new File(containerDir, "server.properties");
 		updateServerProperties(propertiesFile, x, z, c, currentServerEntry);
 
+		int regionCounter = 0;
+		int chunkCounter = 0;
 		if (mode.copyWorld) {
 			File worldDir = new File(containerDir, worldName);
 			if (!worldDir.exists()) {
@@ -504,8 +512,7 @@ public class Deployer implements Callable<Boolean> {
 			int rx = tileSizeMca2 * x;
 			int rz = tileSizeMca2 * z;
 
-			int regionCounter = 0;
-			int chunkCounter = 0;
+
 
 			int rC = 0;
 			for (int sx = -tileSizeMca - 1; sx <= tileSizeMca; sx++) {
@@ -563,6 +570,13 @@ public class Deployer implements Callable<Boolean> {
 		} else if (perHostDirectories) {
 			FileUtils.moveDirectoryToDirectory(containerDir, new File(containersDir, currentServerEntry[2]), true);
 		}
+
+		if (mode.copyWorld && regionCounter == 0) {
+			// Delete empty container
+			containerDir.delete();
+		}
+
+		return regionCounter;
 	}
 
 	void updateServerProperties(File propertiesFile, int x, int z, int c, String[] currentServerEntry) throws IOException {
