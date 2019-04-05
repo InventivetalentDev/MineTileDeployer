@@ -107,7 +107,7 @@ public class Deployer implements Callable<Boolean> {
 	private int tileSize = 16;
 
 	@CommandLine.Option(names = { "--names" },
-						arity = "0..*",
+						split = ",",
 						description = "List of names for the generated containers - these will be used for the output directories")
 	private String[] serverNames = new String[0];
 
@@ -116,7 +116,7 @@ public class Deployer implements Callable<Boolean> {
 	private File serverNamesFile;
 
 	@CommandLine.Option(names = { "--hosts" },
-						arity = "0..*",
+						split = ",",
 						description = "List of hosts to use for the generated containers (e.g. 127.0.0.1)")
 	private String[] serverHosts = new String[0];
 
