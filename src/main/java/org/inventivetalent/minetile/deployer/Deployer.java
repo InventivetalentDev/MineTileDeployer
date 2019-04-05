@@ -140,6 +140,11 @@ public class Deployer implements Callable<Boolean> {
 						description = "Directory for the init.sh script to copy server files from when running in SCRIPT mode")
 	private String scriptServerBase = "";
 
+	@CommandLine.Option(names = { "--acceptEula" },
+						description = "Accept the eula.txt automatically for all containers\n"
+								+ "By using this option you are indicating your agreement to Mojang's EULA (https://account.mojang.com/documents/minecraft_eula)")
+	private boolean acceptEula = false;
+
 	@CommandLine.Option(names = { "--scriptServerDownload" },
 						description = "Directory for the init.sh script to download server .jar from when running in SCRIPT mode")
 	private String scriptServerDownload = "https://papermc.io/ci/job/Paper-1.13/lastSuccessfulBuild/artifact/paperclip.jar";
@@ -482,6 +487,13 @@ public class Deployer implements Callable<Boolean> {
 			updateSpigotConfig(spigotConfig, x, z, c);
 		}
 
+		File eulaFile = new File(containerDir, "eula.txt");
+		if (acceptEula) {
+			try (PrintWriter writer = new PrintWriter(eulaFile)) {
+				writer.println("eula=true");
+			}
+		}
+
 		int regionCounter = 0;
 		int chunkCounter = 0;
 		if (mode.copyWorld) {
@@ -559,7 +571,7 @@ public class Deployer implements Callable<Boolean> {
 		if (mode.copyWorld && regionCounter == 0) {
 			// Delete empty container
 			containerDir.delete();
-		}else {
+		} else {
 			if (gzip) {
 				System.out.println("Creating Tarball...");
 				File tarFile = new File(containersDir, name + ".tar.gz");
@@ -576,8 +588,6 @@ public class Deployer implements Callable<Boolean> {
 				FileUtils.moveDirectoryToDirectory(containerDir, new File(containersDir, currentServerEntry[2]), true);
 			}
 		}
-
-
 
 		return regionCounter;
 	}
