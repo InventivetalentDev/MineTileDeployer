@@ -1,8 +1,12 @@
 #!/bin/sh
+CONTAINER_NAME="--CONTAINER_NAME--"
+
 CONTAINER_VERSION="--CONTAINER_VERSION--"
 SERVER_DOWNLOAD="--SERVER_DOWNLOAD--"
 
 SERVER_BASE="--SERVER_BASE--"
+
+echo "Init Script for $CONTAINER_NAME"
 
 if [[ -z $SERVER_BASE ]]; then
     echo "Please specify the source directory to use as the server base (leave blank to skip):"
