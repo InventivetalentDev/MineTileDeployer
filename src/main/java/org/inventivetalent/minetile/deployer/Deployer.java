@@ -175,6 +175,8 @@ public class Deployer implements Callable<Boolean> {
 
 	@Override
 	public Boolean call() throws Exception {
+		System.out.println("Use --help argument to show options");
+
 		if (input == null || !input.exists()) {
 			System.err.println("Input Directory " + input + " not found");
 			return false;
