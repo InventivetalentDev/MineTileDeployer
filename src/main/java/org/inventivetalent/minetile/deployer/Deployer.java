@@ -16,7 +16,9 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@CommandLine.Command(description = "Utility to split up large worlds into individual MineTile containers for easy deploying",
+@CommandLine.Command(name = "MineTileDeployer",
+					 description = "Utility to split up large worlds into individual MineTile containers for easy deploying",
+					 abbreviateSynopsis = true,
 					 versionProvider = VersionProvider.class,
 					 showDefaultValues = true,
 					 headerHeading = "@|bold,underline Usage|@:%n%n",
@@ -39,38 +41,47 @@ public class Deployer implements Callable<Boolean> {
 	boolean usageHelpRequested;
 
 	@CommandLine.Option(names = { "-i", "--input" },
+						paramLabel = "FILE",
 						description = "World Input (directory containing region, level.dat, etc.)")
 	private File input = new File("./world");
 
 	@CommandLine.Option(names = { "-o", "--output" },
+						paramLabel = "FILE",
 						description = "Output Directory")
 	private File output = new File("./deploy");
 
 	@CommandLine.Option(names = { "-m", "--mode" },
-						description = "Deployer Mode")
+						paramLabel = "MODE",
+						description = "Deployer Mode [COMPLETE, MINIMAL, SCRIPT, CONFIG]")
 	private DeployMode mode = DeployMode.COMPLETE;
 
 	@CommandLine.Option(names = { "-c", "--config" },
+						paramLabel = "FILE",
 						description = "Base Configuration to use for all MineTile containers (e.g. for Redis config)")
 	private File baseConfig = new File("./config.yml");
 
 	@CommandLine.Option(names = { "-s", "--serverBase" },
+						paramLabel = "DIR",
 						description = "Directory containing a base-server that will be copied to all containers")
 	private File serverBase = new File("./server");
 
 	@CommandLine.Option(names = { "--worldName" },
+						paramLabel = "NAME",
 						description = "Name of the world directory if not using the default 'world'")
 	private String worldName = "world";
 
 	@CommandLine.Option(names = { "--containerVersion" },
+						paramLabel = "VERSION",
 						description = "Version for the container plugin (see https://github.com/InventivetalentDev/MineTileContainer/releases)")
 	private String containerVersion = "1.0.0-SNAPSHOT";
 
 	@CommandLine.Option(names = { "--routerVersion" },
+						paramLabel = "VERSION",
 						description = "Version for the router plugin (see https://github.com/InventivetalentDev/MineTileRouter/releases)")
-	private String routerVersion = "1.0.0-SNAPSHOT";//TODO
+	private String routerVersion = "1.0.0-SNAPSHOT";
 
 	@CommandLine.Option(names = { "--portStart" },
+						paramLabel = "PORT",
 						description = "Starting port when auto-increasing port number")
 	private int portStart = 25622;
 
@@ -79,6 +90,7 @@ public class Deployer implements Callable<Boolean> {
 	private boolean sequentialPorts = true;
 
 	@CommandLine.Option(names = { "-r", "--radius" },
+						paramLabel = "RADIUS",
 						description = "Radius of chunk-sections to split, starting from 0,0\n"
 								+ "This will also determine the amount of clients generated")
 	private int radius = 1;
@@ -95,7 +107,7 @@ public class Deployer implements Callable<Boolean> {
 	private int tileSize = 16;
 
 	@CommandLine.Option(names = { "--names" },
-						split = ",",
+						arity = "0..*",
 						description = "List of names for the generated containers - these will be used for the output directories")
 	private String[] serverNames = new String[0];
 
@@ -104,7 +116,7 @@ public class Deployer implements Callable<Boolean> {
 	private File serverNamesFile;
 
 	@CommandLine.Option(names = { "--hosts" },
-						split = ",",
+						arity = "0..*",
 						description = "List of hosts to use for the generated containers (e.g. 127.0.0.1)")
 	private String[] serverHosts = new String[0];
 
