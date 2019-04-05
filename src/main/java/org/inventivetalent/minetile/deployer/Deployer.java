@@ -128,10 +128,6 @@ public class Deployer implements Callable<Boolean> {
 						description = "Whether to enable protective game rules (e.g. mobGriefing:false, doWeatherCycle:false, etc.) - custom values can be specified in a ./gamerules.yml file")
 	private boolean overwriteGameRules = false;
 
-	@CommandLine.Option(names = { "--deleteEmptyTiles" },
-						description = "Delete empty tile directories (without any world sections)")
-	private boolean deleteEmptyTiles = true;
-
 	@CommandLine.Option(names = { "--gzip", "--zip" },
 						description = "Whether to create a .tar.gz archive of the individual containers instead of regular directories")
 	private boolean gzip = false;
