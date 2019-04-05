@@ -477,7 +477,9 @@ public class Deployer implements Callable<Boolean> {
 		}
 
 		File propertiesFile = new File(containerDir, "server.properties");
-		updateServerProperties(propertiesFile, x, z, c, currentServerEntry);
+		if(mode.updateConfig){
+			updateServerProperties(propertiesFile, x, z, c, currentServerEntry);
+		}
 
 		int regionCounter = 0;
 		int chunkCounter = 0;
@@ -580,23 +582,22 @@ public class Deployer implements Callable<Boolean> {
 	}
 
 	void updateServerProperties(File propertiesFile, int x, int z, int c, String[] currentServerEntry) throws IOException {
-		if (!propertiesFile.exists()) { return; }
-
 		currentServerEntry[3] = "25565";
-		try (FileInputStream in = new FileInputStream(propertiesFile)) {
-			Properties properties = new Properties();
-			properties.load(in);
-			if (sequentialPorts) {
-				String port = "" + (portStart + c);
-				currentServerEntry[3] = port;
-				properties.setProperty("server-port", port);
-			} else {
-				currentServerEntry[3] = properties.getProperty("server-port");
-			}
 
-			try (FileOutputStream out = new FileOutputStream(propertiesFile)) {
-				properties.store(out, null);
-			}
+		Properties properties = new Properties();
+		try (FileInputStream in = new FileInputStream(propertiesFile)) {
+			properties.load(in);
+		}
+		if (sequentialPorts) {
+			String port = "" + (portStart + c);
+			currentServerEntry[3] = port;
+			properties.setProperty("server-port", port);
+		} else {
+			currentServerEntry[3] = properties.getProperty("server-port");
+		}
+
+		try (FileOutputStream out = new FileOutputStream(propertiesFile)) {
+			properties.store(out, null);
 		}
 	}
 

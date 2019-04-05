@@ -8,7 +8,7 @@ public enum DeployMode {
 	COMPLETE(true, false, true, true, true),
 
 	/**
-	 * Only copy required that are different accross servers (world and config)
+	 * Only copy required that are different across servers (world and config)
 	 */
 	MINIMAL(false, false, true, true, false),
 
