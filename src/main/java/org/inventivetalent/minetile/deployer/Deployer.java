@@ -142,7 +142,7 @@ public class Deployer implements Callable<Boolean> {
 
 	@CommandLine.Option(names = { "--scriptServerDownload" },
 						description = "Directory for the init.sh script to download server .jar from when running in SCRIPT mode")
-	private String scriptServerDownload = "https://papermc.io/ci/job/Paper/lastSuccessfulBuild/artifact/paperclip.jar";
+	private String scriptServerDownload = "https://papermc.io/ci/job/Paper-1.13/lastSuccessfulBuild/artifact/paperclip.jar";
 
 	@CommandLine.Option(names = { "--threads" },
 						description = "Number of threads to use for creating and copying tile data")
