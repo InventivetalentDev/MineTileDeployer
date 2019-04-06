@@ -73,12 +73,12 @@ public class Deployer implements Callable<Boolean> {
 	@CommandLine.Option(names = { "--containerVersion" },
 						paramLabel = "VERSION",
 						description = "Version for the container plugin (see https://github.com/InventivetalentDev/MineTileContainer/releases)")
-	private String containerVersion = "1.0.0-SNAPSHOT";
+	private String containerVersion = "1.0.1-SNAPSHOT";
 
 	@CommandLine.Option(names = { "--routerVersion" },
 						paramLabel = "VERSION",
 						description = "Version for the router plugin (see https://github.com/InventivetalentDev/MineTileRouter/releases)")
-	private String routerVersion = "1.0.0-SNAPSHOT";
+	private String routerVersion = "1.0.1-SNAPSHOT";
 
 	@CommandLine.Option(names = { "--portStart" },
 						paramLabel = "PORT",
